@@ -402,6 +402,12 @@ Cleanup of code
 #include "TVirtualMCDecayer.h"
 #include "TPDGCode.h"
 
+
+#define TRACKLOGGING 1
+#ifdef TRACKLOGGING
+#include "TrackLoggerService.h"
+#endif
+
 #ifndef WIN32
 # define g3smate  g3smate_
 # define g3smixt  g3smixt_
@@ -583,6 +589,10 @@ TGeant3TGeo::TGeant3TGeo(const char *title, Int_t nwgeant)
 //____________________________________________________________________________
 TGeant3TGeo::~TGeant3TGeo()
 {
+#ifdef TRACKLOGGING
+  Logger::Instance().FlushAndClose();
+#endif
+
    delete fMCGeo;
    geant3tgeo = 0;                                                                         
 }
@@ -2320,6 +2330,17 @@ void gtnextTGeo()
    Int_t itrtyp = gckine->itrtyp;
    gGeoManager->SetCurrentPoint(x[0],x[1],x[2]);
    gGeoManager->SetCurrentDirection(x[3],x[4],x[5]);
+
+#ifdef TRACKLOGGING
+   // this is a convenient place to perform some logging of tracks
+   TGeoNavigator *nav = gGeoManager->GetCurrentNavigator();
+   Logger::Instance().AddEntry(x[0],x[1],x[2],x[3],x[4],x[5], 
+			       step, nav->GetLevel(),
+                               nav->GetCurrentNode()->GetVolume()->GetNumber(), nav->GetPath(),
+                               nav->GetCurrentNode()->GetVolume()->GetName(),
+                               nav->GetCurrentNode()->GetVolume()->GetShape()->ClassName());
+#endif
+
    if (step<=0) {
       gctrak->safety = 0.;
       gctrak->snext = 0.;
